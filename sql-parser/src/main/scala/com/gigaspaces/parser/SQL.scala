@@ -1,17 +1,19 @@
 package com.gigaspaces.parser
 
-trait SQL
+sealed trait SQL
 
 object SQL {
 
-  case class Select(field: Field, table: Table) extends SQL
+  case class TableName(name: String, alias : Option[String])
+
+  case class Select(field: Fields, table: Tables) extends SQL
 
 
-  trait Table
-  case class SimpleTable(name: String) extends Table
+  sealed trait Tables
+  case class TableNames(names : List[TableName]) extends Tables
 
-  trait Field
-  case object AllFields extends Field
+  sealed trait Fields
+  case object AllFields extends Fields
 
 }
 
