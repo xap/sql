@@ -12,8 +12,11 @@ object SQL {
   sealed trait Tables
   case class TableNames(names : List[TableName]) extends Tables
 
+  case class Field(table : Option[String], name: String)
+
   sealed trait Fields
-  case object AllFields extends Fields
+  case class AllFields() extends Fields
+  case class SomeFields(fields : List[Field]) extends Fields
 
 }
 

@@ -67,8 +67,8 @@ object JSONExample extends App {
 ]
 """
 
-  val P = com.gigaspaces.parser.Reference
-  import com.gigaspaces.parser.ReferenceTypes.Parser
+  val P = com.gigaspaces.parser.instances.Reference
+  import com.gigaspaces.parser.instances.ReferenceTypes.Parser
 
   def printResult[E](e: Either[E,JSON]): Unit =
     e.fold(println, println)
