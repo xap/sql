@@ -102,11 +102,13 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
   /** Unescaped string literals, like "foo" or "bar". */
   def quoted: Parser[String] = string("\"") *> thru("\"").map(_.dropRight(1))
 
+  def singleQuoted: Parser[String] = string("'") *> thru("'").map(_.dropRight(1))
+
   /** Unescaped or escaped string literals, like "An \n important \"Quotation\"" or "bar". */
   def escapedQuoted: Parser[String] =
     // rather annoying to write, left as an exercise
     // we'll just use quoted (unescaped literals) for now
-    token(quoted label "string literal")
+    token((quoted or singleQuoted) label "string literal")
 
   /** C/Java style floating point literals, e.g .1, -1.0, 1e9, 1E-23, etc.
     * Result is left as a string to keep full precision
@@ -151,6 +153,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     def or[B>:A](p2: => Parser[B]): Parser[B] = self.or(p,p2)
 
     def map[B](f: A => B): Parser[B] = self.map(p)(f)
+
     def many: Parser[List[A]] = self.many(p)
 
     def slice: Parser[String] = self.slice(p)
