@@ -1,5 +1,7 @@
 package com.gigaspaces.parser
 
+import com.gigaspaces.parser.SQL.Exp
+
 sealed trait SQL
 
 object SQL {
@@ -23,7 +25,15 @@ object SQL {
   case class StringLiteral(value: String) extends Exp
   case class Variable(namespace: List[String], value: String) extends Exp
   case class Function(name: String, args: List[Exp]) extends Exp
-  case class Op(left: Exp, op : String, right: Exp) extends Exp
+  case class BinaryOp(left: Exp, op : String, right: Exp) extends Exp
 
 }
 
+sealed trait Arith
+
+object Arith{
+  case class Number(value : Double) extends Arith
+  case class Grouped(a: Arith) extends Arith
+  case class BinaryOp(a1 : Arith, name: String, a2: Arith) extends Arith
+  case class UnaryOp(name: String, a1 : Arith) extends Arith
+}

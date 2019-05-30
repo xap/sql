@@ -1,11 +1,12 @@
 package com.gigaspaces.parser
 
-import com.gigaspaces.parser.SQL.Exp
+
 
 import scala.language.{higherKinds, implicitConversions}
 
 
 object EXPParser {
+  import com.gigaspaces.parser.SQL.Exp
 
   def expParser[Parser[+ _]](P: Parsers[Parser]): Parser[Exp] = {
     import P.{string => _, _}
@@ -31,10 +32,44 @@ object EXPParser {
     def exp: Parser[Exp] =  number | stringLiteral | attempt(function) | variable | surround("(", ")")(exp)
 
     def binaryOpL(op: Parser[String]): Parser[Exp] = opL(exp)(op.map(combine))
-    def combine(op: String)(left: Exp, right: Exp): Exp = Op(left, op, right)
-    def binaryOps: Parser[String] = "*" | "+" | "/" | "<" | "<=" | ">" | "=>"
+    def combine(op: String)(left: Exp, right: Exp): Exp = BinaryOp(left, op, right)
+    def binaryOps: Parser[String] = "="
     def compositExp: Parser[Exp] = binaryOpL(binaryOps)
 
     root(compositExp)
+  }
+
+
+  def arith[Parser[+ _]](P: Parsers[Parser]): Parser[Arith] = {
+
+    // this is cool, parsing arithmetic exp according to math precedence (left associative)
+    // see ArithTest
+    // https://www.engr.mun.ca/~theo/Misc/exp_parsing.htm
+
+    import P.{string => _, _}
+    import Arith._
+    implicit def tok(s: String): Parser[String] = token(P.string(s))
+
+    /*
+    E --> T {( "+" | "-" ) T}
+    T --> F {( "*" | "/" ) F}
+    F --> P ["^" F]
+    P --> v | "(" E ")" | "-" T
+     */
+
+    def precedence0: Parser[String] = "+" | "-"
+    def precedence1: Parser[String] = "*" | "/"
+    def precedence2: Parser[String] = "^"
+
+    def e: Parser[Arith] = opL(t)(precedence0.map(combine)) scope "E (precedence0)"
+    def t: Parser[Arith] = opL(f)(precedence1.map(combine)) scope "T (precedence1)"
+    def f: Parser[Arith] = opL(p)(precedence2.map(combine)) scope "F (precedence2)"
+
+
+    def p:Parser[Arith] = number | surround("(", ")")(e) | map2("-", t)(UnaryOp)
+
+    def combine(op: String)(left: Arith, right: Arith): Arith = Arith.BinaryOp(left, op, right)
+    def number: Parser[Number] = double map Number scope "number"
+    root(e)
   }
 }

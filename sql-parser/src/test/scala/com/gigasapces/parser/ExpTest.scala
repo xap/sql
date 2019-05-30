@@ -1,8 +1,8 @@
 package com.gigasapces.parser
 
+import com.gigaspaces.parser.EXPParser
 import com.gigaspaces.parser.SQL._
 import com.gigaspaces.parser.instances.Reference
-import com.gigaspaces.parser.{EXPParser, SQL}
 import org.scalatest.{BeforeAndAfter, FunSpec}
 import org.scalatest.Matchers._
 
@@ -105,16 +105,61 @@ class ExpTest extends FunSpec with BeforeAndAfter {
 
   describe("multiplication expression") {
     it("1 * 2 is a multiplication expression") {
-      val pt = P.run(sql)("1+2")
-      pt should be(Right(Op(Number(1),"+", Number(2))))
+      val pt = P.run(sql)("1=2")
+      pt should be(Right(BinaryOp(Number(1),"=", Number(2))))
     }
-    it("m * n is a multiplication expression") {
-      val pt = P.run(sql)("m*n")
-      pt should be(Right(Op(Variable(List(),"m"), "*",Variable(List(),"n"))))
+  }
+}
+
+class ArithTest extends FunSpec with BeforeAndAfter {
+  import com.gigaspaces.parser.{Arith, EXPParser}
+  import com.gigaspaces.parser.Arith._
+
+  import com.gigaspaces.parser.instances.ReferenceTypes.Parser
+
+  val P: Reference.type = com.gigaspaces.parser.instances.Reference
+  val exp: Parser[Arith] = EXPParser.arith(P)
+
+  describe("testing numeric expression") {
+    it("1 is an Number expression") {
+      val input = "1"
+      val pt = P.run(exp)(input)
+      pt should be(Right(Number(1)))
     }
-    it("m * n * v is a multiplication expression") {
-      val pt = P.run(sql)("m*n*v")
-      pt should be(Right(Op(Op(Variable(List(),"m"),"*",Variable(List(),"n")),"*",Variable(List(),"v"))))
+    it("1 + 1 is an Number expression") {
+      val input = "1 + 1"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(Number(1),"+",Number(1))))
+    }
+    it("1 + 1 * 2 is an Number expression") {
+      val input = "1 + 1 * 2"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(Number(1),"+",BinaryOp(Number(1),"*",Number(2)))))
+    }
+    it("1 * 1 + 2 is an Number expression") {
+      val input = "1 * 1 + 2"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(BinaryOp(Number(1),"*",Number(1)),"+",Number(2))))
+    }
+    it("1 * 2 ^ 10 is an Number expression") {
+      val input = "1 * 2 ^ 10"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(Number(1),"*",BinaryOp(Number(2),"^",Number(10)))))
+    }
+    it("1 ^ 2 * 10 is an Number expression") {
+      val input = "1 ^ 2 * 10"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(BinaryOp(Number(1),"^",Number(2)),"*",Number(10))))
+    }
+    it("1 + -2 is an Number expression") {
+      val input = "1 + -2"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(Number(1.0),"+",Number(-2))))
+    }
+    it("(1 + 2) * 3 is an Number expression") {
+      val input = "(1 + 2) * 3"
+      val pt = P.run(exp)(input)
+      pt should be(Right(BinaryOp(BinaryOp(Number(1),"+",Number(2)),"*",Number(3))))
     }
   }
 }
