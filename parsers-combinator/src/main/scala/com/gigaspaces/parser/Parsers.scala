@@ -3,6 +3,7 @@ package com.gigaspaces.parser
 
 import java.util.regex._
 
+import com.gigaspaces.parser.instances.ReferenceTypes.Parser
 
 import scala.util.matching.Regex
 import language.higherKinds
@@ -30,6 +31,8 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     string("") map (_ => a)
 
   def succeed[A](a: A): Parser[A]
+
+  def fail[A](msg: String): Parser[A]
 
   def slice[A](p: Parser[A]): Parser[String]
 
